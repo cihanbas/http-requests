@@ -11,11 +11,15 @@ import {
 } from "react-native";
 import AntDesign from "@expo/vector-icons/AntDesign";
 import { useState } from "react";
+import { useNavigation } from "@react-navigation/native";
 let searchValue = "";
 
 function HomeScreen() {
+  // state'ler
   const [movieList, setMovieList] = useState([]);
   const [loading, setLoading] = useState(false);
+  //
+  const navigation = useNavigation();
   const onSearch = () => {
     setLoading(true);
     const myHeaders = new Headers();
@@ -42,13 +46,17 @@ function HomeScreen() {
           setMovieList(result.Search);
         } else {
           alert("Film Bulunamadi");
+          setMovieList([]);
         }
       })
       .catch((error) => {
         alert("Film Bulunamadi");
       });
   };
-
+  const navigateToDetail = (item) => {
+    navigation.navigate("Detail", { item });
+    console.log("item", item);
+  };
   return (
     <View style={styles.container}>
       <View style={styles.searchWrapper}>
@@ -70,21 +78,25 @@ function HomeScreen() {
         contentContainerStyle={styles.scrollView}
         showsVerticalScrollIndicator={false}
       >
-        {movieList &&
-          movieList.length > 0 &&
-          movieList.map((movie) => (
-            <Pressable style={styles.movieItem} key={movie.imdbID}>
-              <Image
-                source={{ uri: movie.Poster }}
-                style={styles.movieImg}
-              ></Image>
-              <View style={styles.movieItemTextWrapper}>
-                <Text>{movie.Title}</Text>
-                <Text>{movie.Year}</Text>
-                <Text>{movie.imdbID}</Text>
-              </View>
-            </Pressable>
-          ))}
+        {movieList.map((movie) => (
+          <Pressable
+            style={styles.movieItem}
+            key={movie.imdbID}
+            onPress={() => navigateToDetail(movie)}
+          >
+            <Image
+              source={{ uri: movie.Poster }}
+              style={styles.movieImg}
+            ></Image>
+            <View style={styles.movieItemTextWrapper}>
+              <Text numberOfLines={2} style={styles.movieText}>
+                {movie.Title}
+              </Text>
+              <Text>{movie.Year}</Text>
+              <Text>{movie.imdbID}</Text>
+            </View>
+          </Pressable>
+        ))}
       </ScrollView>
     </View>
   );
@@ -125,6 +137,8 @@ const styles = StyleSheet.create({
   },
   movieItemTextWrapper: {
     rowGap: 8,
+    flex: 1,
+    overflow: "hidden",
   },
   scrollView: {
     flexGrow: 1,
