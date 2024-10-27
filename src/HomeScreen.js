@@ -6,19 +6,18 @@ import {
   TextInput,
   View,
   Dimensions,
+  ScrollView,
+  ActivityIndicator,
 } from "react-native";
 import AntDesign from "@expo/vector-icons/AntDesign";
+import { useState } from "react";
 let searchValue = "";
-const data = {
-  Title: "Harry Potter and the Deathly Hallows: Part 2",
-  Year: "2011",
-  imdbID: "tt1201607",
-  Type: "movie",
-  Poster:
-    "https://m.media-amazon.com/images/M/MV5BOTA1Mzc2N2ItZWRiNS00MjQzLTlmZDQtMjU0NmY1YWRkMGQ4XkEyXkFqcGc@._V1_SX300.jpg",
-};
+
 function HomeScreen() {
+  const [movieList, setMovieList] = useState([]);
+  const [loading, setLoading] = useState(false);
   const onSearch = () => {
+    setLoading(true);
     const myHeaders = new Headers();
     myHeaders.append(
       "x-rapidapi-key",
@@ -32,12 +31,22 @@ function HomeScreen() {
     };
 
     fetch(
-      "https://movie-database-alternative.p.rapidapi.com/?s=harry&r=json&page=1",
+      `https://movie-database-alternative.p.rapidapi.com/?s=${searchValue}&r=json&page=1`,
       requestOptions
     )
       .then((response) => response.json())
-      .then((result) => console.log(result.Search))
-      .catch((error) => console.error(error));
+      .then((result) => {
+        console.log("result", result);
+        setLoading(false);
+        if (result.Search) {
+          setMovieList(result.Search);
+        } else {
+          alert("Film Bulunamadi");
+        }
+      })
+      .catch((error) => {
+        alert("Film Bulunamadi");
+      });
   };
 
   return (
@@ -49,18 +58,34 @@ function HomeScreen() {
             searchValue = text;
           }}
         />
-        <Pressable onPress={() => onSearch()}>
-          <AntDesign name="search1" size={24} color="black" />
-        </Pressable>
+        {loading ? (
+          <ActivityIndicator size={"small"} color={"blue"} />
+        ) : (
+          <Pressable onPress={() => onSearch()}>
+            <AntDesign name="search1" size={24} color="black" />
+          </Pressable>
+        )}
       </View>
-      <Pressable style={styles.movieItem}>
-        <Image source={{ uri: data.Poster }} style={styles.movieImg}></Image>
-        <View style={styles.movieItemTextWrapper}>
-          <Text>{data.Title}</Text>
-          <Text>{data.Year}</Text>
-          <Text>{data.imdbID}</Text>
-        </View>
-      </Pressable>
+      <ScrollView
+        contentContainerStyle={styles.scrollView}
+        showsVerticalScrollIndicator={false}
+      >
+        {movieList &&
+          movieList.length > 0 &&
+          movieList.map((movie) => (
+            <Pressable style={styles.movieItem} key={movie.imdbID}>
+              <Image
+                source={{ uri: movie.Poster }}
+                style={styles.movieImg}
+              ></Image>
+              <View style={styles.movieItemTextWrapper}>
+                <Text>{movie.Title}</Text>
+                <Text>{movie.Year}</Text>
+                <Text>{movie.imdbID}</Text>
+              </View>
+            </Pressable>
+          ))}
+      </ScrollView>
     </View>
   );
 }
@@ -95,9 +120,15 @@ const styles = StyleSheet.create({
     columnGap: 8,
     backgroundColor: "white",
     marginBottom: 4,
+    paddingHorizontal: 8,
+    borderRadius: 8,
   },
   movieItemTextWrapper: {
     rowGap: 8,
+  },
+  scrollView: {
+    flexGrow: 1,
+    paddingHorizontal: 10,
   },
 });
 export default HomeScreen;
